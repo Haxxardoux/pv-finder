@@ -4,17 +4,17 @@ import hiddenlayer as HL
 
 from model.collectdata_mdsA import collect_data
 from model.alt_loss_A import Loss
-from model.training import trainNet
-
-from model.training import trainNet
+from model.training import trainNet, select_gpu
 from model.utilities import load_full_state, count_parameters, Params, save_to_mlflow
+
 from model.autoencoder_models import UNet
+from model.autoencoder_models import UNetPlusPlus
 
 args = Params(
     batch_size=64,
-    device = 'cuda:0',
-    epochs=20,
-    lr=1e-3,
+    device = select_gpu(2),
+    epochs=50,
+    lr=4e-4,
     experiment_name='UNet', 
     asymmetry_parameter=2.5
 )
@@ -52,7 +52,7 @@ val_loader = collect_data(
 mlflow.tracking.set_tracking_uri('file:/share/lazy/pv-finder_model_repo')
 mlflow.set_experiment(args['experiment_name'])
 
-model = UNet().to(args['device'])
+model = UNetPlusPlus().to(args['device'])
 # Fuse Conv, bn and relu
 model.fuse_model()
 
@@ -64,7 +64,7 @@ torch.quantization.prepare_qat(model, inplace=True)
 
 # load_full_state(model, '/share/lazy/pv-finder_model_repo/17/27d5279c4a0641ecb3807f400b25a9a8/artifacts/run_stats.pyt')
 
-run_name = 'QAT u-net'
+run_name = 'QAT u-net++'
 
 train_iter = enumerate(trainNet(model, optimizer, loss, train_loader, val_loader, args['epochs'], notebook=False))
 with mlflow.start_run(run_name = run_name) as run:
