@@ -52,7 +52,7 @@ val_loader = collect_data(
 mlflow.tracking.set_tracking_uri('file:/share/lazy/pv-finder_model_repo')
 mlflow.set_experiment(args['experiment_name'])
 
-model = UNetPlusPlus().to(args['device'])
+model = UNet().to(args['device'])
 # Fuse Conv, bn and relu
 model.fuse_model()
 
@@ -64,7 +64,7 @@ torch.quantization.prepare_qat(model, inplace=True)
 
 # load_full_state(model, '/share/lazy/pv-finder_model_repo/17/27d5279c4a0641ecb3807f400b25a9a8/artifacts/run_stats.pyt')
 
-run_name = 'QAT u-net++'
+run_name = 'QAT u-net'
 
 train_iter = enumerate(trainNet(model, optimizer, loss, train_loader, val_loader, args['epochs'], notebook=False))
 with mlflow.start_run(run_name = run_name) as run:
@@ -82,4 +82,6 @@ with mlflow.start_run(run_name = run_name) as run:
             'Metric: Validation loss':result.val,
             'Metric: Efficiency':result.eff_val.eff_rate,
             'Metric: False positive rate':result.eff_val.fp_rate,
+            'Param: Asymmetry':args['asymmetry_parameter'],
+            'Param: Epochs':args['epochs'],
         }, step=epoch)

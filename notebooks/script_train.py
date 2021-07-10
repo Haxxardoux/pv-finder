@@ -72,5 +72,7 @@ with mlflow.start_run(run_name = run_name) as run:
             'Metric: Validation loss':result.val,
             'Metric: Efficiency':result.eff_val.eff_rate,
             'Metric: False positive rate':result.eff_val.fp_rate,
+            'Param: Asymmetry':args['asymmetry_parameter'],
+            'Param: Epochs':args['epochs'],
         }, step=i)
         
