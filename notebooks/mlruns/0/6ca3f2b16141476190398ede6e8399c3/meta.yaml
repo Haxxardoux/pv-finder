@@ -1,0 +1,15 @@
+artifact_uri: file:///data/home/will/pv-finder/notebooks/mlruns/0/6ca3f2b16141476190398ede6e8399c3/artifacts
+end_time: 1626263220521
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 6ca3f2b16141476190398ede6e8399c3
+run_uuid: 6ca3f2b16141476190398ede6e8399c3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1626263097292
+status: 4
+tags: []
+user_id: michael24peters

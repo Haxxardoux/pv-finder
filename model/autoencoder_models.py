@@ -151,7 +151,7 @@ class UNet(nn.Module):
         d_block = downsample_options[d_selection]
         u_block = upsample_options[u_selection]
                 
-        self.rcbn1 = d_block(1, n, kernel_size = 25, p=dropout_p)
+        self.rcbn1 = d_block(4, n, kernel_size = 25, p=dropout_p)
         self.rcbn2 = d_block(n, n, kernel_size = 7, p=dropout_p)
         self.rcbn3 = d_block(n, n, kernel_size = 5, p=dropout_p)
         self.rcbn4 = d_block(n, n, kernel_size = 5, p=dropout_p)
@@ -273,9 +273,9 @@ class ಠ_ಠ_Residual(nn.Module):
     
 class UNetPlusPlus(nn.Module):
     def __init__(self,
-                 n=32,
+                 n=64,
                  sc_mode='concat',
-                 dropout_p=0,
+                 dropout_p=.25,
                  d_selection='ConvBNrelu',
                  u_selection='Up'
                 ):
@@ -293,14 +293,13 @@ class UNetPlusPlus(nn.Module):
         d_block = downsample_options[d_selection]
         u_block = upsample_options[u_selection]
                 
-        self.rcbn1 = d_block(1, n, kernel_size = 25, p=dropout_p)
+        self.rcbn1 = d_block(4, n, kernel_size = 25, p=dropout_p)
         self.rcbn2 = d_block(n, n, kernel_size = 7, p=dropout_p)
         self.rcbn3 = d_block(n, n, kernel_size = 5, p=dropout_p)
         self.rcbn4 = d_block(n, n, kernel_size = 5, p=dropout_p)
         self.rcbn5 = d_block(n, n, kernel_size = 5, p=dropout_p)
 
         self.ui = nn.ConvTranspose1d(n, n, 2, 2)
-        
         self.i1 = ConvBNrelu(2*n, n, kernel_size=5, p=dropout_p)
         self.i2 = ConvBNrelu(2*n, n, kernel_size=5, p=dropout_p)
         self.i3 = ConvBNrelu(2*n, n, kernel_size=5, p=dropout_p)
@@ -317,14 +316,14 @@ class UNetPlusPlus(nn.Module):
         self.up4 = nn.ConvTranspose1d(n, n, 2, 2)
         self.up_c4 = ConvBNrelu(5*n, n, kernel_size=5, p=dropout_p)
         
-        self.out_intermediate = nn.Conv1d(2*n, n, 5, padding=2) # padding=5-1//1
-        self.outc = nn.Conv1d(n, 1, 5, padding=2) # padding=5-1//1
+        self.out_intermediate = nn.Conv1d(2*n, n, 5, padding=2) # padding=5-1//2
+        self.outc = nn.Conv1d(n, 1, 5, padding=2) # padding=5-1//2
         
         self.d = nn.MaxPool1d(2)
 
     def forward(self, x):
 #         x = torch.cat([x, x[:, ::-1, :]], dim=0) experimental - flip samples in a batch to try and  learn symmetrical kernels 
-        
+#        print('x.shape=',x.shape)
         d1 = self.rcbn1(x) # 4000
         d2 = self.d(self.rcbn2(d1)) # 2000
         d3 = self.d(self.rcbn3(d2)) # 1000
@@ -576,6 +575,126 @@ class ConvBNleaky(nn.Sequential):
 #         nn.BatchNorm1d(out_channels),
         nn.LeakyReLU())
 
+# ======================================================================
+# AllCNN Models
+# ======================================================================
+class DenseNet(nn.Module):
+    '''
+    This is used to pretrain the X feature set
+    '''
+    def __init__(self):
+        super(DenseNet, self).__init__()
+
+        self.conv1 = nn.Conv1d(
+            in_channels=4,
+            out_channels=20,
+            kernel_size=25,
+            stride=1,
+            padding=(25 - 1) // 2,
+        )
+
+        self.conv2 = nn.Conv1d(
+            in_channels=self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=15,
+            stride=1,
+            padding=(15 - 1) // 2,
+        )
+
+        self.conv3 = nn.Conv1d(
+            in_channels=self.conv2.out_channels+self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=15,
+            stride=1,
+            padding=(15 - 1) // 2,
+        )
+
+        self.conv4 = nn.Conv1d(
+            in_channels=self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=15,
+            stride=1,
+            padding=(15 - 1) // 2,
+        )
+
+        self.conv5 = nn.Conv1d(
+            in_channels=self.conv4.out_channels+self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=15,
+            stride=1,
+            padding=(15 - 1) // 2,
+        )
+
+        self.conv6 = nn.Conv1d(
+            in_channels=self.conv5.out_channels+self.conv4.out_channels+self.conv3.out_channels+self.conv2.out_channels
+                +self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=15,
+            stride=1,
+            padding=(15 - 1) // 2,
+        )
+        
+        self.conv7 = nn.Conv1d(
+            in_channels=self.conv6.out_channels+self.conv5.out_channels+self.conv4.out_channels+self.conv3.out_channels
+                +self.conv2.out_channels+self.conv1.out_channels,
+            out_channels=10,
+            kernel_size=5,
+            stride=1,
+            padding=(5 - 1) // 2,
+        )
+        
+        self.conv8 = nn.Conv1d(
+            in_channels=self.conv7.out_channels+self.conv6.out_channels+self.conv5.out_channels+self.conv4.out_channels
+                +self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
+            out_channels=1,
+            kernel_size=5,
+            stride=1,
+            padding=(5 - 1) // 2,
+        )
+
+        assert (
+            self.finalFilter.kernel_size[0] % 2 == 1
+        ), "Kernel size should be odd for 'same' conv."
+
+        ##  18 July 2019 try dropout 0.15 rather than 0.05 (used in CNN5Layer_A) to mitigate overtraining
+        self.convdropout = nn.Dropout(0.15)
+        
+        self.bn1 = nn.BatchNorm1d(self.conv1.out_channels)
+        self.bn2 = nn.BatchNorm1d(self.conv2.out_channels)
+        self.bn3 = nn.BatchNorm1d(self.conv3.out_channels)
+        self.bn4 = nn.BatchNorm1d(self.conv4.out_channels)
+        self.bn5 = nn.BatchNorm1d(self.conv5.out_channels)
+        self.bn6 = nn.BatchNorm1d(self.conv6.out_channels)
+        self.bn7 = nn.BatchNorm1d(self.conv7.out_channels)
+        self.bn8 = nn.BatchNorm1d(self.conv8.out_channels)
+
+    def forward(self, x):
+        leaky = nn.LeakyReLU(0.01)
+        x01 = leaky(self.bn1(self.conv1(x)))
+        x01 = self.convdropout(x01)
+        x2 = leaky(self.bn2(self.conv2(x01)))
+        x2 = self.convdropout(x2)
+        x3 = leaky(self.bn3(self.conv3(torch.cat([x01,x2],1))))
+        x3 = self.conv3dropout(x3)
+        x4 = leaky(self.bn4(self.conv4(torch.cat([x01,x2,x3],1))))
+        x4 = self.convdropout(x4)
+        x5 = leaky(self.bn5(self.conv5(torch.cat([x01,x2,x3,x4],1))))
+        x5 = self.convdropout(x5)
+        x6 = leaky(self.bn6(self.conv6(torch.cat([x01,x2,x3,x4,x5],1))))
+        x6 = self.convdropout(x6)
+        x7 = leaky(self.bn7(self.conv7(torch.cat([x01,x2,x3,x4,x5,x6],1))))
+        x7 = self.convdropout(x7)
+
+        ##  with a little luck, the following two lines instantiate the
+        ##  conv8 filter and reshape its output to work as output to the
+        ##  softplus activation
+        x = self.bn8(self.conv8(torch.cat([x01,x2,x3,x4,x5,x6,x7],1)))
+        x = x.view(x.shape[0], x.shape[-1])
+
+        x = torch.nn.Softplus()(x)
+
+        return x
+
 
 # ===================== NOT AUTOENCODER MODEL =============================================
 
@@ -725,5 +844,3 @@ class Conv6_SC(nn.Module):
         x = self.conv6(torch.cat( [x, x1], 1))
         x = self.softplus(x)
         return x
-
-

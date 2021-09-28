@@ -7201,7 +7201,7 @@ class ACN_2i4_8L_DenseNet_BN(nn.Module):
         super(ACN_2i4_8L_DenseNet_BN, self).__init__()
 
         self.conv1 = nn.Conv1d(
-            in_channels=1,
+            in_channels=4,
             out_channels=20,
             kernel_size=25,
             stride=1,
@@ -7276,7 +7276,7 @@ class ACN_2i4_8L_DenseNet_BN(nn.Module):
         self.conv7 = nn.Conv1d(
             in_channels=self.conv6.out_channels+self.conv5.out_channels+self.conv4.out_channels+self.conv3.out_channels
                 +self.conv2.out_channels+self.conv1.out_channels,
-            out_channels=1,
+            out_channels=10,
             kernel_size=5,
             stride=1,
             padding=(5 - 1) // 2,
@@ -7293,9 +7293,9 @@ class ACN_2i4_8L_DenseNet_BN(nn.Module):
             in_channels=self.conv7.out_channels+self.conv6.out_channels+self.conv5.out_channels+self.conv4.out_channels
                 +self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
             out_channels=1,
-            kernel_size=91,
+            kernel_size=5,
             stride=1,
-            padding=(91 - 1) // 2,
+            padding=(5 - 1) // 2,
         )
 
         assert (

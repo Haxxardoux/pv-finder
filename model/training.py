@@ -34,7 +34,7 @@ def select_gpu(selection=None):
 
     if not torch.cuda.is_available():
         print("Selecting CPU (CUDA not available)")
-        return torch.device("CPU")
+        return torch.device("cpu")
     elif selection is None:
         raise RuntimeError(
             "CUDA_VISIBLE_DEVICES is *required* when running with CUDA available"
