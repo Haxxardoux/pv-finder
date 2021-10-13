@@ -121,7 +121,3 @@ Moore/run gaudirun.py '$MOOREROOT/options/force_functor_cache.py' '$MOOREROOT/op
 ```
 
 Be aware to set the correct conditions tags and other Moore options in the Moore config files. For larger n-tuple productions, it makes sense to make properties like `DumpOutputName` of PVFinder available in the respective Moore configuration [here](https://gitlab.cern.ch/mstahl/Moore/-/blob/9a164c00d1a86d0c5a694064bb3651a9f5a4f81b/Hlt/RecoConf/python/RecoConf/hlt1_tracking.py#L229), [here](https://gitlab.cern.ch/mstahl/Moore/-/blob/9a164c00d1a86d0c5a694064bb3651a9f5a4f81b/Hlt/RecoConf/python/RecoConf/standalone.py#L65) and [here](https://gitlab.cern.ch/mstahl/Moore/-/blob/9a164c00d1a86d0c5a694064bb3651a9f5a4f81b/Hlt/RecoConf/options/hlt1_PV_reco.py) to be able to follow [this](https://gitlab.cern.ch/mstahl/Moore/-/snippets/979#note_3936427) idea.
-
-## PV-Finder Manual
-
-https://www.overleaf.com/3281639688fpksymtjgcqn
