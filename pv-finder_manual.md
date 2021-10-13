@@ -3,7 +3,7 @@
 **Michael Peters**  
 *University of Cincinnati*  
 
-**Last Updated:** September 2021  
+**Last Updated:** October 2021  
 
 ## 1.1. **Table of Contents**
 
@@ -61,7 +61,7 @@ There are a few models being used to find PVs. The default model architecture us
 
 To explain AllCNN, it is important to understand what the SimpleCNN architecture is. For the purposes of discussion, it will be assumed that this is a 6 layer neural network. In this case, SimpleCNN is a series of 5 convolutional layers with LeakyReLU activation functions, as well as a fully connected layer at the end, where it passes through a Softplus activation function. Dropout is also employed in each layer. Furthermore, the input dimension is preserved at each layer (1 x 4000), which is accomplished with a stride of one and padding in the convolutional layers. This architecture can also be seen in Figure 1.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/simplecnn-arch.png "Figure 1") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/simplecnn-arch.bmp "Figure 1") |
 |:--:|
 | *Figure 1. This is a sample architecture of SimpleCNN. Different channel and kernel sizes are used throughout the model, which have been decided largely out of trial and error, as well as some (currently) unprincipled estimates.* |
 
@@ -69,7 +69,7 @@ To explain AllCNN, it is important to understand what the SimpleCNN architecture
 
 AllCNN is similar to SimpleCNN. As the name suggests, the difference is that AllCNNdoes not use a fully-connected layer at the end. Instead, there are only convolutional layersused throughout the network. This typically does not work on its own, however, and musthave trained weights loaded into all but the last, newly added, convolutional layer.  It isnot currently understood why this is the case, but the network seems incapable of learningand locating PVs without pre-training weights. This is accomplished by first training usingSimpleCNN, then loading all but its last layer’s weights into an AllCNN model.  Experi-mentally, this works and has consistently produced better results than by just running theSimpleCNN model. Below is a diagram of the AllCNN architecture, seen in Figure 2.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/allcnn-arch.png "Figure 2") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/allcnn-arch.bmp "Figure 2") |
 |:--:|
 | *Figure 2. This is a sample architecture of AllCNN. As in Figure 1, different channel and kernel sizes are used throughout the model, likewise chosen in the same fashion.* |
 
@@ -90,7 +90,7 @@ A more in-depth discussion of this process will follow.
 
 ### 1.4.1. **Overview**
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/lhcb_diagram.png "Figure 3") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/lhcb_diagram.bmp "Figure 3") |
 |:--:|
 | *Figure 3. This is a diagram of the LHCb detector located at CERN. The z direction used in the following discussion is defined as horizontal with respect to this image.* |
 
@@ -100,7 +100,7 @@ All voxels are normalized with respect to the beam's position, which can be thou
 
 If a series of readings are collected that are nearly linear (as in Figure 4 below), the markers are substituted with a straight line parameterized by a few values; **this** is a track.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/tracks.png "Figure 4") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/tracks.bmp "Figure 4") |
 |:--:|
 | *Figure 4. Here are a series of readings along the z-axis. This comes from a [presentation](https://indico.cern.ch/event/759388/contributions/3303404/attachments/1814784/2965597/2019_HOW_PvFinder.pdf) on pv-finder given in 2019.* |
 
@@ -112,7 +112,7 @@ Instead, the most variance in position occurs in the z direction, which can rang
 
 This is typically why the data is divided into two representations -- the z uncertainty and the x, y uncertainty.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/kde_plots.png "Figure 5") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/kde_plots.bmp "Figure 5") |
 |:--:|
 | *Figure 5. This is a set of plots that represent the data collected from LHCb.* |
 
@@ -139,13 +139,13 @@ There are many videos, tutorials, discussions, and blogs about what Git and GitH
 There are a few basic commands needed to operate Git in a terminal, shell, or Linux machine. These include:
 
 - `git clone <remote-repo-url>`
-  - Clones a repository, which can be found on GitHub (see Figure 3). The `<remote-repo-url>` argument should be the link to the repository from GitHub.
+  - Clones a repository, which can be found on GitHub (see Figure 6). The `<remote-repo-url>` argument should be the link to the repository from GitHub.
 - `gitclone -b <branch-name> <remote-repo-url>`
   - Clones a specific branch from a repository.
 
-  | ![alt text](/pv-finder_fork/pv-finder/figs/github-clone.png "Figure 3") |
+  | ![alt text](/pv-finder_fork/pv-finder/figs/github-clone.bmp "Figure 6") |
   |:--:|
-  | *Figure 3. This is the GitHub page for pv-finder. In the top right corner, the Code drop menu can be selected and the repository link copied to the clipboard.* |
+  | *Figure 6. This is the GitHub page for pv-finder. In the top right corner, the Code drop menu can be selected and the repository link copied to the clipboard.* |
 - `git add -A`
   - Generally speaking, when you want to push changes, this is what to use.  This stages the changes made to be committed.
 - `git commit -m "Your message"`
@@ -309,15 +309,15 @@ UNet, in layman's terms, works by having layers with different levels of resolut
 
 For a more technical definition, UNet uses a series of convolutional layers to downsample the dimension of the input features (as well as MaxPooling, if needed), then uses upsampling techniques to return to the original input dimension. This is what gives the model its name, as the structure creates a sort of "U" shape, where the input features start large, shrine, then become larger again. To complexify the model further, skip connections are also used from one side of the "U" to another, which helps with the dimensions and preserves earlier, less complex, features that the network picks out. An example of the UNet architecture can be found below.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/unet.png "Figure 4") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/unet.bmp "Figure 7") |
   |:--:|
-  | *Figure 4. This is the UNet diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1505.04597v1)).* |
+  | *Figure 7. This is the UNet diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1505.04597v1)).* |
 
 Another represents that matches the earlier format of SimpleCNN and AllCNN can be seen below.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/unet-arch.png "Figure 5") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/unet-arch.bmp "Figure 8") |
   |:--:|
-  | *Figure 5. This is the UNet diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1505.04597v1)).* |
+  | *Figure 8. This is the UNet diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1505.04597v1)).* |
 
 #### 1.7.1.4. **Other Architectures**
 
@@ -325,19 +325,19 @@ There are many other architectures that are untested, but could work. Some archi
 
 A final, more recent, model implemented into pv-finder is **UNet++**. This architecture adds a series of densely connected layers between each skip connection. A diagram for the architecture can be seen below.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/unet++.png "Figure 6") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/unet++.bmp "Figure 9") |
   |:--:|
-  | *Figure 6. This is the UNet++ diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1807.10165)).* |
+  | *Figure 9. This is the UNet++ diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1807.10165)).* |
 
 ### 1.7.2. **Using a Model**
 
 Using a model for pv-finder is a relatively simple process, as it is largely already completed. Navigate to the notebooks subdirectory in pv-finder and select a .ipynb file that you wish to run. Make sure to use an existing model.
 
-To add a model to a model notebook for testing, first locate which file the model you want to use is in (usually .py file type) in the `model` subdirectory. Once this is done, locate the exact name of the model you want to use. This should be the name of a class. An example of a model in one of these files can be seen in Figure 7 below.
+To add a model to a model notebook for testing, first locate which file the model you want to use is in (usually .py file type) in the `model` subdirectory. Once this is done, locate the exact name of the model you want to use. This should be the name of a class. An example of a model in one of these files can be seen in Figure 10 below.
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/model-file-ex.png "Figure 7") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/model-file-ex.bmp "Figure 10") |
   |:--:|
-  | *Figure 7. Model file example. Here, models_mjp_07June21.py is the model file and ACN_1i4_10L_4S is the model name.* |
+  | *Figure 10. Model file example. Here, models_mjp_07June21.py is the model file and ACN_1i4_10L_4S is the model name.* |
 
 The two pieces of information should then be copied into the jupyter notebook at the appropriate place using the example format below.
 
@@ -394,9 +394,9 @@ You can then type `localhost:<port #>` into browser to view MLFlow. The `<port #
 
 ### 1.8.2. **Navigating MLFlow**
 
-| ![alt text](/pv-finder_fork/pv-finder/figs/mlflow-ui.png "Figure 8") |
+| ![alt text](/pv-finder_fork/pv-finder/figs/mlflow-ui.bmp "Figure 11") |
   |:--:|
-  | *Figure 8. This is a preview of what mlflow might look like when you first launch it using the command given above (using the same directory).* |
+  | *Figure 11. This is a preview of what mlflow might look like when you first launch it using the command given above (using the same directory).* |
 
 Once you are able to launch MLflow and reach a page similar to the one found in Figure 8 above, you can spend some time exploring all the options the software has to offer. It is actually quite intuitive and easy to navigate. On the left sidebar, you can choose which "experiment" you want to view, which is essentially just a series of folders containing runs of your choice. Each experiment is assigned a number that is a part of every save file's path. In the top right corner -- the "Columns" button -- you can select what columns you want to view. In the model notebook, you can set up parameters that MLflow tracks and saves in the run's save file, which can be viewed here. You can add learning rate, false positive rate, efficiency, and any custom tags that you desire, which each take up their own column.
 
