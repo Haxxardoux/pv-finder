@@ -652,10 +652,6 @@ class DenseNet(nn.Module):
             padding=(5 - 1) // 2,
         )
 
-        assert (
-            self.finalFilter.kernel_size[0] % 2 == 1
-        ), "Kernel size should be odd for 'same' conv."
-
         ##  18 July 2019 try dropout 0.15 rather than 0.05 (used in CNN5Layer_A) to mitigate overtraining
         self.convdropout = nn.Dropout(0.15)
         
