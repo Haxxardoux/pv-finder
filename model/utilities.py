@@ -5,8 +5,19 @@ import mlflow
 
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 
-def Params(batch_size, epochs, lr, experiment_name, device, asymmetry_parameter=2.5):
-        return {'batch_size':batch_size, 'epochs':epochs, 'lr':lr, 'experiment_name':experiment_name, 'device':device, 'asymmetry_parameter':asymmetry_parameter}
+#def Params(batch_size, epochs, lr, experiment_name, device, asymmetry_parameter=2.5):
+#        return {'batch_size':batch_size, 'epochs':epochs, 'lr':lr, 'experiment_name':experiment_name, 'device':device, 'asymmetry_parameter':asymmetry_parameter}
+    
+class Params:
+    def __init__(self,batch_size,device,epochs,lr,experiment_name,asymmetry_parameter,run_name,model):
+        self.batch_size=batch_size
+        self.device=device
+        self.epochs=epochs
+        self.lr=lr
+        self.experiment_name=experiment_name
+        self.asymmetry_parameter=asymmetry_parameter
+        self.run_name=run_name
+        self.model=model
 
 def count_parameters(model):
     """

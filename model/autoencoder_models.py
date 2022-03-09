@@ -133,7 +133,7 @@ class UNet(nn.Module):
     def __init__(self,
                  n=32,
                  sc_mode='concat',
-                 dropout_p=0,
+                 dropout_p=.25,
                  d_selection='ConvBNrelu',
                  u_selection='Up'
                 ):
@@ -370,16 +370,19 @@ class UNetPlusPlus(nn.Module):
 
 # ======================= Perturbative Models ====================================
 class PerturbativeUNet(nn.Module):
-    def __init__(self, args, n, sc_mode='concat', dropout_p=0):
+    def __init__(self, 
+                 n=64, 
+                 sc_mode='concat', 
+                 dropout_p=.25):
         super().__init__()
-        self.mode = sc_mode
         if sc_mode == 'concat': 
             factor = 2
         else: 
             factor = 1
+        self.mode = sc_mode
         
         # network for perturbative features
-        self.cbn1_x = ConvBNrelu(2, n, k_size = 11, p = dropout_p)
+        self.cbn1_x = ConvBNrelu(2, n, kernel_size = 11, p = dropout_p)
         self.cbn2_x = ConvBNrelu(n, n, p = dropout_p)
         self.cbn3_x = ConvBNrelu(n, n, p = dropout_p)
         self.cbn4_x = ConvBNrelu(n, n, p = dropout_p)
@@ -392,16 +395,16 @@ class PerturbativeUNet(nn.Module):
         self.d = nn.MaxPool1d(2)
         
         # network for X features
-        self.rcbn1 = ConvBNrelu(1, n, k_size = 25, p = dropout_p)
-        self.rcbn2 = ConvBNrelu(n, n, k_size = 7, p = dropout_p)
-        self.rcbn3 = ConvBNrelu(n, n, k_size = 5, p = dropout_p)
-        self.rcbn4 = ConvBNrelu(n, n, k_size = 5, p = dropout_p)
-        self.rcbn5 = ConvBNrelu(n, n, k_size = 5, p = dropout_p)
+        self.rcbn1 = ConvBNrelu(1, n, kernel_size = 25, p = dropout_p)
+        self.rcbn2 = ConvBNrelu(n, n, kernel_size = 7, p = dropout_p)
+        self.rcbn3 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
+        self.rcbn4 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
+        self.rcbn5 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
 
-        self.up1 = Up(n, n, k_size = 5, p = dropout_p)
-        self.up2 = Up(n*factor, n, k_size = 5, p = dropout_p)
-        self.up3 = Up(n*factor, n, k_size = 5, p = dropout_p)
-        self.up4 = Up(n*factor, n, k_size=5, p = dropout_p)
+        self.up1 = Up(n, n, kernel_size = 5, p = dropout_p)
+        self.up2 = Up(n*factor, n, kernel_size = 5, p = dropout_p)
+        self.up3 = Up(n*factor, n, kernel_size = 5, p = dropout_p)
+        self.up4 = Up(n*factor, n, kernel_size=5, p = dropout_p)
         self.out_intermediate = nn.Conv1d(n*factor, n, 5, padding=2)
 
         self.outc_larger = nn.Conv1d(factor*n, 1, 3, padding=1)
@@ -587,7 +590,7 @@ class DenseNet(nn.Module):
 
         self.conv1 = nn.Conv1d(
             in_channels=4,
-            out_channels=20,
+            out_channels=25,
             kernel_size=25,
             stride=1,
             padding=(25 - 1) // 2,
@@ -595,7 +598,7 @@ class DenseNet(nn.Module):
 
         self.conv2 = nn.Conv1d(
             in_channels=self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=15,
             stride=1,
             padding=(15 - 1) // 2,
@@ -603,7 +606,7 @@ class DenseNet(nn.Module):
 
         self.conv3 = nn.Conv1d(
             in_channels=self.conv2.out_channels+self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=15,
             stride=1,
             padding=(15 - 1) // 2,
@@ -611,7 +614,7 @@ class DenseNet(nn.Module):
 
         self.conv4 = nn.Conv1d(
             in_channels=self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=15,
             stride=1,
             padding=(15 - 1) // 2,
@@ -619,7 +622,7 @@ class DenseNet(nn.Module):
 
         self.conv5 = nn.Conv1d(
             in_channels=self.conv4.out_channels+self.conv3.out_channels+self.conv2.out_channels+self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=15,
             stride=1,
             padding=(15 - 1) // 2,
@@ -628,7 +631,7 @@ class DenseNet(nn.Module):
         self.conv6 = nn.Conv1d(
             in_channels=self.conv5.out_channels+self.conv4.out_channels+self.conv3.out_channels+self.conv2.out_channels
                 +self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=15,
             stride=1,
             padding=(15 - 1) // 2,
@@ -637,7 +640,7 @@ class DenseNet(nn.Module):
         self.conv7 = nn.Conv1d(
             in_channels=self.conv6.out_channels+self.conv5.out_channels+self.conv4.out_channels+self.conv3.out_channels
                 +self.conv2.out_channels+self.conv1.out_channels,
-            out_channels=10,
+            out_channels=25,
             kernel_size=5,
             stride=1,
             padding=(5 - 1) // 2,
@@ -652,12 +655,8 @@ class DenseNet(nn.Module):
             padding=(5 - 1) // 2,
         )
 
-        assert (
-            self.finalFilter.kernel_size[0] % 2 == 1
-        ), "Kernel size should be odd for 'same' conv."
-
         ##  18 July 2019 try dropout 0.15 rather than 0.05 (used in CNN5Layer_A) to mitigate overtraining
-        self.convdropout = nn.Dropout(0.15)
+        self.convdropout = nn.Dropout(0.25)
         
         self.bn1 = nn.BatchNorm1d(self.conv1.out_channels)
         self.bn2 = nn.BatchNorm1d(self.conv2.out_channels)
@@ -675,7 +674,7 @@ class DenseNet(nn.Module):
         x2 = leaky(self.bn2(self.conv2(x01)))
         x2 = self.convdropout(x2)
         x3 = leaky(self.bn3(self.conv3(torch.cat([x01,x2],1))))
-        x3 = self.conv3dropout(x3)
+        x3 = self.convdropout(x3)
         x4 = leaky(self.bn4(self.conv4(torch.cat([x01,x2,x3],1))))
         x4 = self.convdropout(x4)
         x5 = leaky(self.bn5(self.conv5(torch.cat([x01,x2,x3,x4],1))))

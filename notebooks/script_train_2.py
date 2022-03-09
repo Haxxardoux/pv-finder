@@ -13,20 +13,55 @@ from model.autoencoder_models import UNetPlusPlus
 from model.autoencoder_models import DenseNet as DenseNet
 
 args = Params(
-    batch_size=128,
+    batch_size=64,
     device = select_gpu(2),
-    epochs=1000,
-    lr=1e-9,
-    experiment_name='2/2022',
+    epochs=200,
+    lr=1e-6,
+    experiment_name='Top Models',
     asymmetry_parameter=2.5
 )
 
-#events = 320000
+'''
+train_loader = collect_data(
+    '/share/lazy/sokoloff/ML-data_A/Aug14_80K_train.h5',
+      '/share/lazy/sokoloff/ML-data_AA/Oct03_80K_train.h5',
+#     '/share/lazy/sokoloff/ML-data_AA/Oct03_40K_train.h5',
+      '/share/lazy/will/ML_mdsA/June30_2020_80k_1.h5',
+     '/share/lazy/will/ML_mdsA/June30_2020_80k_3.h5',
+     '/share/lazy/will/ML_mdsA/June30_2020_80k_4.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_5.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_6.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_7.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_8.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_9.h5',
+    batch_size=args['batch_size'],
+    masking=True,
+    shuffle=False,
+    load_XandXsq=False,
+#     device = args['device'], 
+    load_xy=False)
+
+val_loader = collect_data(
+    '/share/lazy/sokoloff/ML-data_AA/Oct03_20K_val.h5',
+    batch_size=args['batch_size'],
+    slice=slice(256 * 39),
+    masking=True, 
+    shuffle=False,
+    load_XandXsq=False,
+    load_xy=False)
+'''
+
+events = 320000
 ## This is used when training with the new KDE
 train_loader = collect_data_poca(#'/share/lazy/will/data/June30_2020_80k_1.h5',
-                            '/share/lazy/will/data/June30_2020_80k_3.h5',
-                            '/share/lazy/will/data/June30_2020_80k_4.h5',
-                            '/share/lazy/will/data/June30_2020_80k_5.h5',
+#                            '/share/lazy/will/data/June30_2020_80k_3.h5',
+#                            '/share/lazy/will/data/June30_2020_80k_4.h5',
+#                            '/share/lazy/will/data/June30_2020_80k_5.h5',
+                            # full lhcb data here
+                            '/share/lazy/sokoloff/ML-data_AA/pv_HLT1CPU_MinBiasMagDown_14Nov.h5',
+                            '/share/lazy/sokoloff/ML-data_AA/pv_HLT1CPU_JpsiPhiMagDown_12Dec.h5',
+                            '/share/lazy/sokoloff/ML-data_AA/pv_HLT1CPU_D0piMagUp_12Dec.h5',
+                            '/share/lazy/sokoloff/ML-data_AA/pv_HLT1CPU_MinBiasMagUp_14Nov.h5',
                             batch_size=args['batch_size'],
                             #device=args['device'],
                             masking=True, shuffle=True,
@@ -47,25 +82,24 @@ val_loader = collect_data_poca('/share/lazy/sokoloff/ML-data_AA/20K_POCA_kernel_
 mlflow.tracking.set_tracking_uri('file:/share/lazy/pv-finder_model_repo')
 mlflow.set_experiment(args['experiment_name'])
 
-# use when loading random initialized weights (i.e. use when training from scratch)
-#model = UNet().to(args['device'])
+# model = UNet().to(args['device'])
 # use when loading pre-trained weights
-#model = torch.load('/share/lazy/pv-finder_model_repo/24/67757aa532894c8da2bd429402731ffa/artifacts/run_stats.pyt').to(args['device'])
-model.to("cuda:0")
+model = torch.load('/share/lazy/pv-finder_model_repo/24/a6a99bc3871147f4a1007284ced5e156/artifacts/run_stats.pyt').to(args['device'])
+# model.to("cuda:0")
 optimizer = torch.optim.Adam(model.parameters(), lr=args['lr'])
 loss = Loss(epsilon=1e-5,coefficient=args['asymmetry_parameter'])
 
 parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-#load_full_state(model, optimizer, '/share/lazy/pv-finder_model_repo/24/9a2b98a397eb404497b26ab5eaa091a5/artifacts/train.ipynb')
+#load_full_state(model, optimizer, '/share/lazy/pv-finder_model_repo/24/fa8a62697d5f490fb498f30c132eab7b/artifacts/run_stats.pyt')
 
-run_name = 'unet'
+run_name = 'dense_net* 1.3'
 
 # tune kernel based on gpu
 #torch.backends.cudnn.benchmark=True
 train_iter = enumerate(trainNet(model, optimizer, loss, train_loader, val_loader, args['epochs'], notebook=True))
-with mlflow.start_run(run_name = args.run_names[i]) as run:
-    mlflow.log_artifact('script_train.py')
+with mlflow.start_run(run_name = run_name) as run:
+    mlflow.log_artifact('script_train_2.py')
     for i, result in train_iter:
         print(result.cost)
         torch.save(model, 'run_stats.pyt')

@@ -1634,9 +1634,9 @@ class AllCNN8Layer_Ca_Two_KDE_withPcnn(nn.Module):
         self.conv6dropout = nn.Dropout(0.15)
         self.conv7dropout = nn.Dropout(0.15)
 
-        self.fc1 = nn.Linear(
-            in_features = 4000 * self.conv7.out_channels,
-            out_features = 4000)
+#        self.fc1 = nn.Linear(
+#            in_features = 4000 * self.conv7.out_channels,
+#            out_features = 4000)
 
 
 ## the "finalFilter" is meant to replace the fully connected layer with a
@@ -1687,9 +1687,9 @@ class AllCNN8Layer_Ca_Two_KDE_withPcnn(nn.Module):
         assert self.ppConv3.kernel_size[0] % 2 == 1, "Kernel size should be odd for 'same' pConv."
 
 
-        self.ppFc1 = nn.Linear(
-            in_features = 4000 * self.ppConv3.out_channels,
-            out_features = 4000)
+#        self.ppFc1 = nn.Linear(
+#            in_features = 4000 * self.ppConv3.out_channels,
+#            out_features = 4000)
 
 ## the "finalFilter" is meant to replace the fully connected layer with a
 ## convolutional layer that extends over the full range where we saw

@@ -13,13 +13,44 @@ from model.autoencoder_models import UNetPlusPlus
 from model.autoencoder_models import DenseNet as DenseNet
 
 args = Params(
-    batch_size=128,
-    device = select_gpu(2),
-    epochs=1000,
-    lr=1e-9,
-    experiment_name='2/2022',
+    batch_size=64,
+    device = select_gpu(0),
+    epochs=200,
+    lr=1e-7,
+    experiment_name='Top Models',
     asymmetry_parameter=2.5
 )
+
+'''
+## This is used when training with the old KDE
+train_loader = collect_data(
+    '/share/lazy/sokoloff/ML-data_A/Aug14_80K_train.h5',
+      '/share/lazy/sokoloff/ML-data_AA/Oct03_80K_train.h5',
+#     '/share/lazy/sokoloff/ML-data_AA/Oct03_40K_train.h5',
+      '/share/lazy/will/ML_mdsA/June30_2020_80k_1.h5',
+     '/share/lazy/will/ML_mdsA/June30_2020_80k_3.h5',
+     '/share/lazy/will/ML_mdsA/June30_2020_80k_4.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_5.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_6.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_7.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_8.h5',
+#     '/share/lazy/will/ML_mdsA/June30_2020_80k_9.h5',
+    batch_size=args['batch_size'],
+    masking=True,
+    shuffle=False,
+    load_XandXsq=False,
+#     device = args['device'], 
+    load_xy=False)
+
+val_loader = collect_data(
+    '/share/lazy/sokoloff/ML-data_AA/Oct03_20K_val.h5',
+    batch_size=args['batch_size'],
+    slice=slice(256 * 39),
+    masking=True, 
+    shuffle=False,
+    load_XandXsq=False,
+    load_xy=False)
+'''
 
 #events = 320000
 ## This is used when training with the new KDE
@@ -64,7 +95,7 @@ run_name = 'unet'
 # tune kernel based on gpu
 #torch.backends.cudnn.benchmark=True
 train_iter = enumerate(trainNet(model, optimizer, loss, train_loader, val_loader, args['epochs'], notebook=True))
-with mlflow.start_run(run_name = args.run_names[i]) as run:
+with mlflow.start_run(run_name = run_name) as run:
     mlflow.log_artifact('script_train.py')
     for i, result in train_iter:
         print(result.cost)
