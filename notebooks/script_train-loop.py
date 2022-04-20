@@ -23,14 +23,14 @@ from model.autoencoder_models import DenseNet
 ## IMPORTANT: if you add a new model to the 'models' params, you probably need to add this case 
 ## to the if-else block in the for loop. Otherwise, it will likely throw some error at you.
 args = Params(
-    batch_size=[64,64,64,64],
+    batch_size=[64,64,64],
     device = select_gpu(1),
-    epochs=[400,400,400,400],
-    lr=[1e-6,1e-6,1e-6,1e-6],
+    epochs=[400,400,400],
+    lr=[1e-6,1e-6,1e-6],
     experiment_name='Feb-2022',
     asymmetry_parameter=[2.5,2.5,2.5,2.5],
-    run_name=['p_u-net 2','u-net 3','u-net++ 2','dense_net 2'],
-    model = ['p_u-net','u-net','u-net++','dense_net']
+    run_name=['u-net 3','u-net++ 2','dense_net 2'],
+    model = ['u-net','u-net++','dense_net']
 )
 
 ## loop through arguments

@@ -16,8 +16,8 @@ args = Params(
     batch_size=128,
     device = select_gpu(2),
     epochs=1000,
-    lr=1e-9,
-    experiment_name='2/2022',
+    lr=1e-8,
+    experiment_name='Feb-2022',
     asymmetry_parameter=2.5
 )
 

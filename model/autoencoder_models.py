@@ -373,7 +373,7 @@ class PerturbativeUNet(nn.Module):
     def __init__(self, 
                  n=64, 
                  sc_mode='concat', 
-                 dropout_p=.25):
+                 dropout_p=.20):
         super().__init__()
         if sc_mode == 'concat': 
             factor = 2
