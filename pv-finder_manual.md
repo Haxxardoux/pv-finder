@@ -95,6 +95,10 @@ The input into the CNN (or some other machine learning algorithm) is a kernel de
 
 One other method of KDE generation that is being explored is the POCA-KDE. POCA stands for “point of closest approach.” For each track (recall tracks are 3d vectors), there is a POCA along the track which minimizes the 3-dimensional distance from the track to the beamline (z-axis). The covariance matrix associated with each track can be used to calculate an ellipsoid centered around the POCA, where the size is determined by the track’s uncertainty (see Figure 5). A smaller ellipsoid corresponds to a track with higher precision, and a larger ellipsoid corresponds to a track with lower precision. This ellipsoid is fully defined by its center (the POCA), the major axis, and two minor axes. The conversion is achieved as follows:
 
+| ![alt text](/figs/kde-procedure.bmp) |
+|:--:|
+| *Math symbols do not function properly in GitHub. Use this figure to properly read the text below.* |
+
 1. Define the beamline vector (z-axis) as $v_1$ and the track vector as $v_2$. Calculate the vector connecting the POCA along $v_1$ and the POCA along $v_2$ and call it $v_3$.
 2. Calculate the DOCA (distance of closest approach) as the magnitude of the vector $v_3$
 3. Calculate the vector $\hat{y} = (1/\text{DOCA}) v_3$ (Normalized $v_3$).
