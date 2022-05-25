@@ -1,63 +1,61 @@
-# 1. **PV-Finder Manual**
+# 1. PV-Finder Manual
 
-**Michael Peters**  
-*University of Cincinnati*  
+**Michael Peters** - *University of Cincinnati*  
 
-**Last Updated:** October 2021  
+**Elliot Kauffman**
 
-## 1.1. **Table of Contents**
+**Last Updated:** May 2022  
 
-- [1. **PV-Finder Manual**](#1-pv-finder-manual)
-  - [1.1. **Table of Contents**](#11-table-of-contents)
-  - [1.2. **Introduction**](#12-introduction)
-  - [1.3. **PV-Finder**](#13-pv-finder)
-    - [1.3.1. **Purpose**](#131-purpose)
-    - [1.3.2. **Models**](#132-models)
-      - [1.3.2.1. **SimpleCNN**](#1321-simplecnn)
-      - [1.3.2.2. **AllCNN**](#1322-allcnn)
-  - [1.4. **Generating Histograms**](#14-generating-histograms)
-    - [1.4.1. **Overview**](#141-overview)
-    - [1.4.2. **What is a KDE?**](#142-what-is-a-kde)
-    - [1.4.3. **Different KDEs**](#143-different-kdes)
-  - [1.5. **Git & GitHub**](#15-git--github)
-    - [1.5.1. **Basic Commands**](#151-basic-commands)
-    - [1.5.2. **Resources**](#152-resources)
-  - [1.6. **Linux**](#16-linux)
-    - [1.6.1. **Setup**](#161-setup)
-    - [1.6.2. **Basic Commands**](#162-basic-commands)
-    - [1.6.3. **Connecting to Server**](#163-connecting-to-server)
-  - [1.7. **Model**](#17-model)
-    - [1.7.1. **Architectures**](#171-architectures)
-      - [1.7.1.1. **AllCNN**](#1711-allcnn)
-      - [1.7.1.2. **Perturbative AllCNN**](#1712-perturbative-allcnn)
-      - [1.7.1.3. **UNet**](#1713-unet)
-      - [1.7.1.4. **Other Architectures**](#1714-other-architectures)
-    - [1.7.2. **Using a Model**](#172-using-a-model)
-    - [1.7.3. **Creating a Model**](#173-creating-a-model)
-  - [1.8. **MLFlow**](#18-mlflow)
-    - [1.8.1. **Setup**](#181-setup)
-    - [1.8.2. **Navigating MLFlow**](#182-navigating-mlflow)
-  - [1.9. **References**](#19-references)
+## 1.1. Table of Contents
 
-## 1.2. **Introduction**
+- [1. PV-Finder Manual](#1-pv-finder-manual)
+  - [1.1. Table of Contents](#11-table-of-contents)
+  - [1.2. Introduction](#12-introduction)
+  - [1.3. PV-Finder](#13-pv-finder)
+    - [1.3.1. Purpose](#131-purpose)
+    - [1.3.2. Models](#132-models)
+      - [1.3.2.1. SimpleCNN](#1321-simplecnn)
+      - [1.3.2.2. AllCNN](#1322-allcnn)
+  - [1.4. Kernel Density Estimators](#14-kernel-density-estimators)
+  - [1.5. Git & GitHub](#15-git--github)
+    - [1.5.1. Basic Commands](#151-basic-commands)
+    - [1.5.2. Resources](#152-resources)
+  - [1.6. Linux](#16-linux)
+    - [1.6.1. Linux Setup](#161-linux-setup)
+    - [1.6.2. Basic Commands](#162-basic-commands)
+    - [1.6.3. Connecting to Server](#163-connecting-to-server)
+  - [1.7. Model](#17-model)
+    - [1.7.1. Architectures](#171-architectures)
+      - [1.7.1.1. AllCNN](#1711-allcnn)
+      - [1.7.1.2. Perturbative AllCNN](#1712-perturbative-allcnn)
+      - [1.7.1.3. UNet](#1713-unet)
+      - [1.7.1.4. Other Architectures](#1714-other-architectures)
+    - [1.7.2. Using a Model](#172-using-a-model)
+    - [1.7.3. Creating a Model](#173-creating-a-model)
+  - [1.8. MLFlow](#18-mlflow)
+    - [1.8.1. Setup](#181-setup)
+    - [1.8.2. Navigating MLFlow](#182-navigating-mlflow)
+  - [1.9. References](#19-references)
+
+## 1.2. Introduction
 
 The purpose of this manual is to give a simple and complex overview of pv-finder. This manual will cover many things. For starters, it will explain what pv-finder is, how the process goes from LHCb collision data to learned primary vertices (PVs), some of the physics behind the process, and why this is all important. It will also explain more general concepts, like some of the basics of Linux/UNIX commands, how to use MLFlow, and how to use Git and GitHub. Finally, a sizable will occur of the machine learning that occurs in pv-finder. This will include a thorough walk-through of how to create and implement a neural network architecture into pv-finder, as well as an analysis of existing architectures.
 
-## 1.3. **PV-Finder**
+## 1.3. PV-Finder
 
 This section will discuss the purpose, use, and current model architecture of PV-Finder.
 
-### 1.3.1. **Purpose**
+### 1.3.1. Purpose
 
 The LHCb detector is facing major upgrades in Run 3 in 2021, which includes the hardware level-0 trigger being removed in favor of a purely software trigger. PV-finder is intended to be a method for finding vertices from tracks or hits using machine learning techniques, which would function as this purely software trigger. Currently, the algorithm starts with tracks containing location, direction, and covariance matrix information. The tracks in 3D space are then projected in a 1D binned "kernel", which most closely relates to the z-axis projections of the primary vertices. A 1D machine learning algorithm is then used to predict the PV location from the generated kernel.
 
 This process of creating a kernel estimate of the z-axis projections is known as the Kernel Density Estimator (KDE). There are many different KDEs that have been created, which is beyond the scope of this manual to thoroughly list and explain. It is suffice to say that only one or two KDEs are ever used at once as part of the input for a single machine learning run. More information can be found in the previous papers written on the topic from 2019 and 2021.
 
-### 1.3.2. **Models**
+### 1.3.2. Models
 
 There are a few models being used to find PVs. The default model architecture used as a comparison to all others in pv-finder is the AllCNN architecture, which is a modified version of the SimpleCNN architecture. Alternative models that have been tested include the UNet and modified AllCNN architectures. For now, it is best to focus on the AllCNN architecture.
 
-#### 1.3.2.1. **SimpleCNN**
+#### 1.3.2.1. SimpleCNN
 
 To explain AllCNN, it is important to understand what the SimpleCNN architecture is. For the purposes of discussion, it will be assumed that this is a 6 layer neural network. In this case, SimpleCNN is a series of 5 convolutional layers with LeakyReLU activation functions, as well as a fully connected layer at the end, where it passes through a Softplus activation function. Dropout is also employed in each layer. Furthermore, the input dimension is preserved at each layer (1 x 4000), which is accomplished with a stride of one and padding in the convolutional layers. This architecture can also be seen in Figure 1.
 
@@ -65,7 +63,7 @@ To explain AllCNN, it is important to understand what the SimpleCNN architecture
 |:--:|
 | *Figure 1. This is a sample architecture of SimpleCNN. Different channel and kernel sizes are used throughout the model, which have been decided largely out of trial and error, as well as some (currently) unprincipled estimates.* |
 
-#### 1.3.2.2. **AllCNN**
+#### 1.3.2.2. AllCNN
 
 AllCNN is similar to SimpleCNN. As the name suggests, the difference is that AllCNNdoes not use a fully-connected layer at the end. Instead, there are only convolutional layersused throughout the network. This typically does not work on its own, however, and musthave trained weights loaded into all but the last, newly added, convolutional layer.  It isnot currently understood why this is the case, but the network seems incapable of learningand locating PVs without pre-training weights. This is accomplished by first training usingSimpleCNN, then loading all but its last layer’s weights into an AllCNN model.  Experi-mentally, this works and has consistently produced better results than by just running theSimpleCNN model. Below is a diagram of the AllCNN architecture, seen in Figure 2.
 
@@ -73,68 +71,50 @@ AllCNN is similar to SimpleCNN. As the name suggests, the difference is that All
 |:--:|
 | *Figure 2. This is a sample architecture of AllCNN. As in Figure 1, different channel and kernel sizes are used throughout the model, likewise chosen in the same fashion.* |
 
-## 1.4. **Generating Histograms**
-
-***NOTE: This section is still a work in progress and may not be entirely accurate yet.***
-
-The process of locating PVs after an experiment has been run begins with preparing the data collected. In order to perform machine learning, data needs to be labeled and formatted such that it can be interpreted in a meaningful way. In the case of PV-Finder, it involves:
-
-1. Hits are formed into linear tracks.
-2. Determining the point of closest approach of each track with respect to the beamline in x, y, z space.
-3. Calculate the variance of each point of closest approach in x, y, z space.
-4. Plot point of closest approach in x, y space and z space separately, including the variances in each axis.
-5. Sum z tracks together (sum of point of closest approach curves from each track).
-6. Generate a Kernel Density Estimator from the point of closest approach sums along the z-axis.
-
-A more in-depth discussion of this process will follow.
-
-### 1.4.1. **Overview**
+## 1.4. Kernel Density Estimators
 
 | ![alt text](/figs/lhcb_diagram.bmp "Figure 3") |
 |:--:|
 | *Figure 3. This is a diagram of the LHCb detector located at CERN. The z direction used in the following discussion is defined as horizontal with respect to this image.* |
 
-Figure 3 above provides a high-level idea of what is happening at the LHCb collision site. In one direction past the vertex location (collision site), a series of plates and sensors detect what is produced from the collision and logs it as a series of x, y, and z coordinates. This can be better thought of as "voxels" for reasons that will be explained shortly.
+The input into the CNN (or some other machine learning algorithm) is a kernel density estimator (KDE). This is analogous to a histogram along the axis of the beamline, which is conventionally described as the z-axis, which points in the direction (0,0,1). The KDE for LHCb has 400 bins, ranging from -100 to 300 in mm. The value of the histogram in each z-bin is proportional to the track density at that point in space. This value is calculated as follows:
 
-All voxels are normalized with respect to the beam's position, which can be thought of as pointing in the direction (0, 1, 1).
+1. Recorded hits in the tracking system (T1, T2, T3 in Figure 3) are converted into linear tracks, which are three-dimensional vectors approximating the paths of particles as straight lines (a very good approximation in LHCb)
+2. At each point along the z-axis, we look at an x-y plane corresponding to that z-position (see lower-two graphs in Figure 4). The points at which each track intersects that x-y plane is recorded, and we can look at the “track density” grid for each z-position, which is a grid of 9x9 voxels (the voxel width is chosen using the track resolution in LHCb). If the voxel contains more track intersections, it has a higher value
+3. The center of the voxel with the highest value is used as the starting value for a MINUIT minimization algorithm, which finds a more accurate maximum. This step is currently taking the most time in KDE generation, prompting the exploration of other KDE generation methods.
+4. The density value at the point found by MINUIT is then used as the KDE value at that z-position (see the top graph in Figure 4)
+5. Before input into the CNN, the KDE is usually scaled so that its area is on the order of one.
 
-If a series of readings are collected that are nearly linear (as in Figure 4 below), the markers are substituted with a straight line parameterized by a few values; **this** is a track.
-
-| ![alt text](/figs/tracks.bmp "Figure 4") |
+| ![alt text](/figs/kde.bmp "Figure 4") |
 |:--:|
-| *Figure 4. Here are a series of readings along the z-axis. This comes from a [presentation](https://indico.cern.ch/event/759388/contributions/3303404/attachments/1814784/2965597/2019_HOW_PvFinder.pdf) on pv-finder given in 2019.* |
+| *Figure 3. This is a set of visual representations of the KDE. The above KDE is called KDE-A. Another KDE known as KDE-B is used alongside KDE-A. This KDE is the same as KDE-A except the values at each z-bin are squared, which can emphasize certain features of the histogram.* |
 
-The point of closest approach (POCA) is then measured between each track line and the beamline. These points are not perfectly accurate; thus, they are generated using gaussian distributions in x, y, and z space. In other words, each coordinate determined by the sensors is, in reality, more like a small space in x, y, and z. This is why it is referred to as a voxel rather that a point.
-
-Once the POCAs are determined, their uncertainty is included; this forms ellipses around the POCAs in x, y, z space. If, for some reason, we were completely certain about the x, y, and z coordinates of the POCAs, the resultant KDE would be zero almost everywhere with only a few spikes where PVs are located.
-
-Instead, the most variance in position occurs in the z direction, which can range to several meters. The x/y direction, on the other hand, has much less variance -- usually +/- 20 mm.
-
-This is typically why the data is divided into two representations -- the z uncertainty and the x, y uncertainty.
-
-| ![alt text](/figs/kde_plots.bmp "Figure 5") |
+| ![alt text](/figs/tracks.bmp "Figure 5") |
 |:--:|
-| *Figure 5. This is a set of plots that represent the data collected from LHCb.* |
+| *Figure 4. This diagram explains the relationship of the POCA-KDE with tracking.* |
 
-In Figure 5, the bottom plot represents the x,y POCA ellipsoids, which form the uncertainty in x, y space. The z POCAs and their uncertainties for each track are shown in the second plot down (with the purple curves). Each curve represents one track and are stacked on top of one anohter. The top plot, then, is simply the sum of each of these tracks along the z-axis. This is the POCA sum.
+One other method of KDE generation that is being explored is the POCA-KDE. POCA stands for “point of closest approach.” For each track (recall tracks are 3d vectors), there is a POCA along the track which minimizes the 3-dimensional distance from the track to the beamline (z-axis). The covariance matrix associated with each track can be used to calculate an ellipsoid centered around the POCA, where the size is determined by the track’s uncertainty (see Figure 5). A smaller ellipsoid corresponds to a track with higher precision, and a larger ellipsoid corresponds to a track with lower precision. This ellipsoid is fully defined by its center (the POCA), the major axis, and two minor axes. The conversion is achieved as follows:
 
-### 1.4.2. **What is a KDE?**
+1. Define the beamline vector (z-axis) as $v_1$ and the track vector as $v_2$. Calculate the vector connecting the POCA along $v_1$ and the POCA along $v_2$ and call it $v_3$.
+2. Calculate the DOCA (distance of closest approach) as the magnitude of the vector $v_3$
+3. Calculate the vector $\hat{y} = (1/\text{DOCA}) v_3$ (Normalized $v_3$).
+4. Calculate the vectors $\hat{z} = (1/|v_2|)$ and $\hat{x} = \hat{y}\times\hat{z}$.
+5. Calculate the ellipsoid axes: minor_axis1 = yerror * $\hat{y}$, minor_axis2 = xerror * $\hat{x}$, major_axis = zerror * $\hat{z}$
 
-### 1.4.3. **Different KDEs**
+To convert these ellipsoids into a KDE, the following steps are followed:
 
-Each KDE is represented and formed in different ways. There are certainly many ways a KDE could be formed, but included here are the ones currently in-use today.
+1. For each POCA, calculate the chi-square value ($\chi^2$) of the DOCA and the associated probability value $\text{exp}(-1/2 \chi^2)$ (ignoring the normalization factor $(2\pi)^{3/2}$).
+2. For each z-bin, sum the probability values associated within each POCA
 
-**KDE-A**: KDE-A uses the purple plot from Figure 5; that is, it takes the distributions along the z dimension stacked up as its input for generating the KDE.
+The squared values are also saved as a separate KDE, similar to the original KDE generation method. 
 
-**KDE-B**: KDE-B uses the poca-sum along the z dimension (shown in the top plot of Figure 5) as its input for generating the KDE.
+There is also an ongoing exploration into using a neural network to predict the KDE in order to improve the efficiency of this step in PV-finder.
 
-**POCA-KDE**: The POCA-KDE uses KDE-A, KDE-B, and the x,y poca ellipsoids as its input for generating the KDE.
-
-## 1.5. **Git & GitHub**
+## 1.5. Git & GitHub
 
 There are many videos, tutorials, discussions, and blogs about what Git and GitHub are, as well as their uses. Rather than reinvent the wheel, this section will present some useful/common commands, as well as some useful resources to read/watch to help understand how to use Git/GitHub. These commands can be used when connected to a Linux server (in a terminal, usually).
 
-### 1.5.1. **Basic Commands**
+### 1.5.1. Basic Commands
 
 There are a few basic commands needed to operate Git in a terminal, shell, or Linux machine. These include:
 
@@ -163,16 +143,16 @@ There are a few basic commands needed to operate Git in a terminal, shell, or Li
 
 These commands will function well enough to push/pull code to/from the repository, but not much else. In order to gain a more comprehensive understanding, see the next section on Resources to learn Git/GitHub.
 
-### 1.5.2. **Resources**
+### 1.5.2. Resources
 
 - In-depth [tutorial](https://www.youtube.com/watch?v=RGOj5yH7evk) on almost everything needed to know to use Git and GitHub.
 - General overview of how GitHub flow works. The rest of the [website](https://guides.github.com/introduction/flow/) website offers some useful guides, too.
 
-## 1.6. **Linux**
+## 1.6. Linux
 
 Linux is an operating system that is used to connect and work with the computers that run the jobs for pv-finder. A great deal of discussion could be had about what, precisely, Linux is and what it is used for. For the purpose of operating pv-finder, however, this is not necessary. Rather, a discussion will be had about how to connect to the servers used for pv-finder (goofy, sleepy), some basic commands to navigate these servers, and how to set up a PC to connect to these servers.
 
-### 1.6.1. **Setup**
+### 1.6.1. Linux Setup
 
 To connect to a server that runs pv-finder jobs, a config file must be created that contains the necessary commands to execute this operation. The process described below assumes that this is being done on a Windows PC, though a similar process could likely be applied for Mac users.
 
@@ -197,7 +177,7 @@ Once inside the .ssh directory, create a file named `config`. This can be done b
 
 `XXXX` and `YYYY` are unique ports that should be assigned to you. They will typically start with an 8 or 9 (e.g. 8890). `<username>` should be the username assigned to you during account creation by an administrator.\\
 
-### 1.6.2. **Basic Commands**
+### 1.6.2. Basic Commands
 
 Compiled here is a list of commands to use when connected to the Linux machine, especially when working with pv-finder. This is not intended to be a comprehensive list of commands (as this can be found in the Linux manual (see [here](https://www.man7.org/linux/man-pages/index.html)), but rather a cheat sheet to navigate pv-finder.
 
@@ -256,7 +236,7 @@ Note: do not type any <> that are present in the commands. These are merely inte
   - Attach to the end of any command to run in the background.
   - Useful for running other commands while a command executes.
 
-### 1.6.3. **Connecting to Server**
+### 1.6.3. Connecting to Server
 
 When connecting to a server, the typical process that will occur is this:
 
@@ -278,30 +258,23 @@ These instructions assume that the config file was setup and created correctly a
 
 Sometimes, the jupyter notebook/lab will say that it needs a token/password for you to connect to an already-running instance. To fix this, simply type `jupyter notebook list`, find your notebook, copy the characters after `token=`, and paste into the token box in the notebook/lab. This will grant you access to your work.
 
-## 1.7. **Model**
+## 1.7. Model
 
 A model usually refers to a particular neural network architecture, which is the framework for how a computer is able to learn. Here, the current process for creating models from scratch will be presented, as well as how to import a model into a notebook for use.
 
-### 1.7.1. **Architectures**
+### 1.7.1. Architectures
 
 It was already shown in the introduction that there are two models used by default in pv-finder. These are not the only the models used in testing, nor are they the full representations of our best-performing model architectures.
 
-#### 1.7.1.1. **AllCNN**
+#### 1.7.1.1. AllCNN
 
 In an earlier section of this manual, the AllCNN in its simplest form was presented. Further work has since been done to add complexity to the model in order to increase its performance. These features include skip connections, batch normalization, hyperparameter tuning (i.e. experimenting to find the best learning rate), parameter tuning (i.e. experimenting to find the best kernel sizes, channel sizes, etc.), and more.
 
-#### 1.7.1.2. **Perturbative AllCNN**
+#### 1.7.1.2. Perturbative AllCNN
 
-The AllCNN with perturbation include the x and y components of data from the tracks, which can help improve the learning process for a machine learning algorithm. ~~These perturbation features, however, cannot be added immediately. In order to implement them, AllCNN must first have well-trained weights for the z-projection data (often called the input, or X, data), which in itself requires SimpleCNN to be well-trained. This makes training a perturbative AllCNN network a multi-step process:~~
+The AllCNN with perturbation include the x and y components of data from the tracks, which can help improve the learning process for a machine learning algorithm.
 
-~~1. Acquire well-trained SimpleCNN weights.~~
-~~2. Replace the last fully-connected layer with a convolutional layer and well-train this AllCNN network.~~
-~~3. Freeze weights of AllCNN, add the extra (x,y) feature set, and train the set on perturbative AllCNN network.~~
-~~4. Unfreeze all weights and train the perturbative AllCNN network.~~
-
-***NOTE**: As of September 30th, 2021, an AllCNN model with the x,y feature set (a.k.a. perturbation features) can successfully generate a well-trained model in "one shot" using the poca_kde and DenseNet architecture.*
-
-#### 1.7.1.3. **UNet**
+#### 1.7.1.3. UNet
 
 UNet is a complete different architecture implemented by Will Tepe in 2020. In it, he took an architecture originally created for biomedical image segmentation and applied it to the pv-finder scenario, with the KDE histogram serving as the input, like normal.
 
@@ -319,9 +292,9 @@ Another represents that matches the earlier format of SimpleCNN and AllCNN can b
   |:--:|
   | *Figure 8. This is the UNet diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1505.04597v1)).* |
 
-#### 1.7.1.4. **Other Architectures**
+#### 1.7.1.4. Other Architectures
 
-There are many other architectures that are untested, but could work. Some architectures (as of writing this manual) are in the process of being tested for their viability. One notable example is the **DenseNet**, which is a sort of extreme version of the AllCNN network where every layer has the maximum number of skip connections to previous layers possible. Another model architecture of interest that is currently being explored is the graph neural network (GNN), which could radically alter the way we find primary vertices. It is possible that GNNs could render the whole process of generating KDEs redundant. This remains to be seen and tested, though it is interesting to think about.
+There are many other architectures that are untested, but could work. Some architectures (as of writing this manual) are in the process of being tested for their viability. One notable example is the **DenseNet**, which is a sort of extreme version of the AllCNN network where every layer has the maximum number of skip connections to previous layers possible. Another model architecture of interest that is currently being explored is the graph neural network (GNN), which could radically alter the way we find primary vertices.
 
 A final, more recent, model implemented into pv-finder is **UNet++**. This architecture adds a series of densely connected layers between each skip connection. A diagram for the architecture can be seen below.
 
@@ -329,7 +302,7 @@ A final, more recent, model implemented into pv-finder is **UNet++**. This archi
   |:--:|
   | *Figure 9. This is the UNet++ diagram shown in the original paper it was presented in (see paper [here](https://arxiv.org/abs/1807.10165)).* |
 
-### 1.7.2. **Using a Model**
+### 1.7.2. Using a Model
 
 Using a model for pv-finder is a relatively simple process, as it is largely already completed. Navigate to the notebooks subdirectory in pv-finder and select a .ipynb file that you wish to run. Make sure to use an existing model.
 
@@ -349,7 +322,7 @@ The two pieces of information should then be copied into the jupyter notebook at
     from model.models_mjp_07June21 import ACN_1i4_8L_DenseNet as ModelDN8
     from model.models_mjp_07June21 import ACN_1i4_10L_DenseNet_BN as ModelDN10
 
-### 1.7.3. **Creating a Model**
+### 1.7.3. Creating a Model
 
 This section will discuss where to find existing models and suggest ideas for how to format these models to stay consistent and organized with the rest of the existing model files. This section will not, however, discuss what to do in order to write your own model. This is a subject matter better suited to your own personal study and research. Exploring the existing model files and the way they are written is another way to familiarize yourself and provide ideas for how to structure and write your own model architectures.
 
@@ -374,7 +347,7 @@ Model names should also be descriptive enough to get a quick, at-a-glance look a
 
 $^1$*Work is currently being done to segregate outdated, redundant files from new, useful ones. This may take some time and is not yet complete.*
 
-## 1.8. **MLFlow**
+## 1.8. MLFlow
 
 Taken from the MLflow website:
 
@@ -384,7 +357,7 @@ Taken from the MLflow website:
 
 You can find more about MLflow on their website, found [here](https://mlflow.org/).
 
-### 1.8.1. **Setup**
+### 1.8.1. Setup
 
 The setup for MLflow can be found in the [Basic Commands](#basic-commands-1) section, as well as here. To set up MLflow in your session, first add the MLflow file setup (found in the [Setup](#setup) section). Then, type the following command once logged into goofy or sleepy:
 
@@ -392,7 +365,7 @@ The setup for MLflow can be found in the [Basic Commands](#basic-commands-1) sec
 
 You can then type `localhost:<port #>` into browser to view MLFlow. The `<port #>` should be the port number entered in your config file. Generally, I've found this does not need to be run each time you connect to the server.
 
-### 1.8.2. **Navigating MLFlow**
+### 1.8.2. Navigating MLFlow
 
 | ![alt text](/figs/mlflow-ui.bmp "Figure 11") |
   |:--:|
@@ -400,8 +373,8 @@ You can then type `localhost:<port #>` into browser to view MLFlow. The `<port #
 
 Once you are able to launch MLflow and reach a page similar to the one found in Figure 8 above, you can spend some time exploring all the options the software has to offer. It is actually quite intuitive and easy to navigate. On the left sidebar, you can choose which "experiment" you want to view, which is essentially just a series of folders containing runs of your choice. Each experiment is assigned a number that is a part of every save file's path. In the top right corner -- the "Columns" button -- you can select what columns you want to view. In the model notebook, you can set up parameters that MLflow tracks and saves in the run's save file, which can be viewed here. You can add learning rate, false positive rate, efficiency, and any custom tags that you desire, which each take up their own column.
 
-## 1.9. **References**
+## 1.9. References
 
-[1]: https://arxiv.org/pdf/1906.08306.pdf "A hybrid deep learning approach to vertexing"
-[2]: https://arxiv.org/abs/2103.04962 "Progress in developing a hybrid deep learning algorithm for identifying and locating primary vertices"
-[3]: https://arxiv.org/abs/1505.04597v1 "U-Net: Convolutional Networks for Biomedical Image Segmentation"
+- https://arxiv.org/pdf/1906.08306.pdf "A hybrid deep learning approach to vertexing"
+- https://arxiv.org/abs/2103.04962 "Progress in developing a hybrid deep learning algorithm for identifying and locating primary vertices"
+- https://arxiv.org/abs/1505.04597v1 "U-Net: Convolutional Networks for Biomedical Image Segmentation"
