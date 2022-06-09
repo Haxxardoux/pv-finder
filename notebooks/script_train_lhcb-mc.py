@@ -16,11 +16,11 @@ from model.autoencoder_models import PerturbativeUNet as PerturbativeUNet
 args = Params(
     batch_size=64,
     device=select_gpu(2),
-    epochs=20,
+    epochs=100,
     lr=1e-6,
-    experiment_name='Mar-2022',
-    asymmetry_parameter=1.0,
-    run_name='R2 p_unet'
+    experiment_name='Test',
+    asymmetry_parameter=2.5,
+    run_name='unet test'
 )
 
 ##  pv_HLT1CPU_D0piMagUp_12Dec.h5 + pv_HLT1CPU_MinBiasMagDown_14Nov.h5 contain 138810 events
@@ -60,9 +60,9 @@ mlflow.tracking.set_tracking_uri('file:/share/lazy/pv-finder_model_repo')
 mlflow.set_experiment(args.experiment_name)
 
 ## use when loading random initialized weights (i.e. use when training from scratch)
-#model = PerturbativeUNet().to(args.device)
+model = UNet().to(args.device)
 ## use when loading pre-trained weights
-model = torch.load('/share/lazy/pv-finder_model_repo/29/94eca12edbdc486ca30e70d655915b8c/artifacts/run_stats.pyt').to(args.device)
+#model = torch.load('/share/lazy/pv-finder_model_repo/29/94eca12edbdc486ca30e70d655915b8c/artifacts/run_stats.pyt').to(args.device)
 #model.to("cuda:2")
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 loss = Loss(epsilon=1e-5,coefficient=args.asymmetry_parameter)
