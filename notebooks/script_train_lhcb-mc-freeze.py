@@ -16,12 +16,12 @@ from model.autoencoder_models import PerturbativeUNet as PerturbativeUNet
 
 args = Params(
     batch_size=64,
-    device=select_gpu(0),
-    epochs=300,
-    lr=1e-7,
+    device=select_gpu(2),
+    epochs=5,
+    lr=1e-5,
     experiment_name='June-2022',
     asymmetry_parameter=2.5,
-    run_name='unet-train_no-xy-train_2'
+    run_name='unet-train_xy-train_2 B'
 )
 
 ##  pv_HLT1CPU_D0piMagUp_12Dec.h5 + pv_HLT1CPU_MinBiasMagDown_14Nov.h5 contain 138810 events
@@ -62,22 +62,56 @@ mlflow.set_experiment(args.experiment_name)
 
 ## use when loading random initialized weights (i.e. use when training from scratch)
 model = PerturbativeUNet()
+## use when loading pre-trained weights
+pretrained_model = torch.load('/share/lazy/pv-finder_model_repo/31/fe902ab873de40f98bf746139f85f4a4/artifacts/run_stats.pyt')
 
-## add the following code to allow the user to freeze the some of the weights corresponding 
-## to those taken from an earlier model trained with the original target histograms
-## presumably -- this leaves either the perturbative filter "fixed" and lets the 
-## learning focus on the non-perturbative features, so get started faster, or vice versa
+### debugging start ###
 ct = 0
 for child in model.children():
-  print('ct, child = ',ct, "  ", child)
-  if ct < 11:
-    print("     About to set param.requires_grad=False for ct = ", ct, "params")
-    for param in child.parameters():
-        param.requires_grad = False 
-  ct += 1
+    print("ct, child = ",ct, "  ", child)
+    ct += 1
 
-## use when loading pre-trained weights
-model = torch.load('/share/lazy/pv-finder_model_repo/31/2877a40c24ce447a894a4b89b4f2d58b/artifacts/run_stats.pyt')
+ct = 0
+for child in pretrained_model.children():
+    print("ct, child = ",ct, "  ", child)
+    ct += 1
+### debugging end ###
+
+### weight freezing start ###
+ct = 0
+for child in model.children():
+    print('ct, child = ',ct, "  ", child)
+    if ct < 12:
+      print("     About to set param.requires_grad=False for ct = ", ct, "params")
+      for param in child.parameters():
+          param.requires_grad = False 
+    ct += 1
+### weight freezing end ###
+
+pretrained_dict = pretrained_model.state_dict()
+model_dict = model.state_dict()
+
+### optional printing start ###
+# print("for model_dict")
+# index = 0
+# for k,v in model_dict.items():
+#     print("index, k =  ",index,"  ",k)
+#     index = index+1
+    
+# print(" \n","  for pretrained_dict")
+# index = 0
+# for k,v in pretrained_dict.items():
+#     print("index, k =  ",index,"  ",k)
+#     index = index+1
+### optional printing end ###
+
+pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+## overwrite entries in the existing state dict
+model_dict.update(pretrained_dict) 
+## load the new state dict
+##   need to use strict=False as the two models state model attributes do not agree exactly
+##   see https://pytorch.org/docs/master/_modules/torch/nn/modules/module.html#Module.load_state_dict
+model.load_state_dict(pretrained_dict,strict=False)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 loss = Loss(epsilon=1e-5,coefficient=args.asymmetry_parameter)
@@ -95,7 +129,7 @@ model = model.to(args.device)
 #torch.backends.cudnn.benchmark=True
 train_iter = enumerate(trainNet(model, optimizer, loss, train_loader, val_loader, args.epochs, notebook=True))
 with mlflow.start_run(run_name = args.run_name) as run:
-    mlflow.log_artifact('script_train_lhcb-mc.py')
+    mlflow.log_artifact('script_train_lhcb-mc-freeze.py')
     for i, result in train_iter:
         print(result.cost)
         torch.save(model, 'run_stats.pyt')
@@ -107,9 +141,7 @@ with mlflow.start_run(run_name = args.run_name) as run:
         torch.save(model, output)
         mlflow.log_artifact(output)
 
-        ##
-        ## find average eff and fp over last 10 epochs
-        ##
+        ### find average eff and fp over last 10 epochs ###
         ## If we are on the last 10 epochs but NOT the last epoch
         if(result.epoch >= args.epochs-10):
             avgEff += result.eff_val.eff_rate

@@ -131,7 +131,7 @@ def combine(x, y, mode='concat'):
     
 class UNet(nn.Module):
     def __init__(self,
-                 n=32,
+                 n=64,
                  sc_mode='concat',
                  dropout_p=.25,
                  d_selection='ConvBNrelu',
@@ -151,7 +151,9 @@ class UNet(nn.Module):
         d_block = downsample_options[d_selection]
         u_block = upsample_options[u_selection]
                 
-        self.rcbn1 = d_block(4, n, kernel_size = 25, p=dropout_p)
+        ## first parameter of self.rcbn1 depends on values of 
+        ## load_A_and_B (false 1, true 2) and load_xy (false 0, true2)
+        self.rcbn1 = d_block(2, n, kernel_size = 25, p=dropout_p)
         self.rcbn2 = d_block(n, n, kernel_size = 7, p=dropout_p)
         self.rcbn3 = d_block(n, n, kernel_size = 5, p=dropout_p)
         self.rcbn4 = d_block(n, n, kernel_size = 5, p=dropout_p)
@@ -195,7 +197,6 @@ class UNet(nn.Module):
                 torch.quantization.fuse_modules(m, ['0', '1', '2'], inplace=True)
 
 
-    
 class ಠ_ಠ_noSC(nn.Module):
     def __init__(self, n=32, dropout_p=0):
         super().__init__()
@@ -269,8 +270,7 @@ class ಠ_ಠ_Residual(nn.Module):
 
         ret = F.softplus(logits_x0).squeeze(1)
         return  ret 
-    
-    
+        
 class UNetPlusPlus(nn.Module):
     def __init__(self,
                  n=64,
@@ -322,8 +322,8 @@ class UNetPlusPlus(nn.Module):
         self.d = nn.MaxPool1d(2)
 
     def forward(self, x):
-#         x = torch.cat([x, x[:, ::-1, :]], dim=0) experimental - flip samples in a batch to try and  learn symmetrical kernels 
-#        print('x.shape=',x.shape)
+       #  x = torch.cat([x, x[:, ::-1, :]], dim=0) experimental - flip samples in a batch to try and  learn symmetrical kernels 
+       # print('x.shape=',x.shape)
         d1 = self.rcbn1(x) # 4000
         d2 = self.d(self.rcbn2(d1)) # 2000
         d3 = self.d(self.rcbn3(d2)) # 1000
@@ -373,14 +373,41 @@ class PerturbativeUNet(nn.Module):
     def __init__(self, 
                  n=64, 
                  sc_mode='concat', 
-                 dropout_p=.20):
+                 dropout_p=.20,
+                 d_selection='ConvBNrelu',
+                 u_selection='Up'
+                 ):
         super().__init__()
         if sc_mode == 'concat': 
             factor = 2
         else: 
             factor = 1
         self.mode = sc_mode
+        self.p = dropout_p
         
+        assert d_selection in downsample_options.keys(), f'Selection for downsampling block {d_selection} not present in available options - {downsample_options.keys()}'
+        assert u_selection in upsample_options.keys(), f'Selection for downsampling block {u_selection} not present in available options - {upsample_options.keys()}'
+        
+        d_block = downsample_options[d_selection]
+        u_block = upsample_options[u_selection]
+
+        # network for X features (KDE A + B)
+        self.rcbn1 = d_block(2, n, kernel_size = 25, p=dropout_p)
+        self.rcbn2 = d_block(n, n, kernel_size = 7, p=dropout_p)
+        self.rcbn3 = d_block(n, n, kernel_size = 5, p=dropout_p)
+        self.rcbn4 = d_block(n, n, kernel_size = 5, p=dropout_p)
+        self.rcbn5 = d_block(n, n, kernel_size = 5, p=dropout_p)
+
+        self.up1 = u_block(n, n, kernel_size = 5, p=dropout_p)
+        self.up2 = u_block(n*factor, n, kernel_size = 5, p=dropout_p)
+        self.up3 = u_block(n*factor, n, kernel_size = 5, p=dropout_p)
+        self.up4 = u_block(n*factor, n, kernel_size = 5, p=dropout_p)
+        self.out_intermediate = nn.Conv1d(n*factor, n, 5, padding=2)
+
+        self.outc_larger = nn.Conv1d(factor*n, 1, 3, padding=1)
+
+        self.down = nn.MaxPool1d(2)
+
         # network for perturbative features
         self.cbn1_x = ConvBNrelu(2, n, kernel_size = 11, p = dropout_p)
         self.cbn2_x = ConvBNrelu(n, n, p = dropout_p)
@@ -391,28 +418,25 @@ class PerturbativeUNet(nn.Module):
         self.up3_x = Up(n*factor, n, p = dropout_p)
         self.up4_x = Up(n*factor, n, p = dropout_p)
 
-        self.down = nn.MaxPool1d(2)
         self.d = nn.MaxPool1d(2)
-        
-        # network for X features
-        self.rcbn1 = ConvBNrelu(1, n, kernel_size = 25, p = dropout_p)
-        self.rcbn2 = ConvBNrelu(n, n, kernel_size = 7, p = dropout_p)
-        self.rcbn3 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
-        self.rcbn4 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
-        self.rcbn5 = ConvBNrelu(n, n, kernel_size = 5, p = dropout_p)
-
-        self.up1 = Up(n, n, kernel_size = 5, p = dropout_p)
-        self.up2 = Up(n*factor, n, kernel_size = 5, p = dropout_p)
-        self.up3 = Up(n*factor, n, kernel_size = 5, p = dropout_p)
-        self.up4 = Up(n*factor, n, kernel_size=5, p = dropout_p)
-        self.out_intermediate = nn.Conv1d(n*factor, n, 5, padding=2)
-
-        self.outc_larger = nn.Conv1d(factor*n, 1, 3, padding=1)
 
     def forward(self, x):
-        X = x[:, 0:1, :] # one-slice prevents need for .unsqueeze()
+        X = x[:, :2, :] # one-slice prevents need for .unsqueeze()
         x_y = x[:, -2:, :]
-        
+
+        # X feature based on U-Net
+        x1 = self.rcbn1(X) # 4000
+        x2 = self.d(self.rcbn2(x1)) # 2000
+        x3 = self.d(self.rcbn3(x2)) # 1000
+        x4 = self.d(self.rcbn4(x3)) # 500
+        x = self.d(self.rcbn5(x4)) # 250
+
+        x = self.up1(x) # 500
+        x = self.up2(combine(x, x4, mode=self.mode)) # 1000
+        x = self.up3(combine(x, x3, mode=self.mode)) # 2000
+        x = self.up4(combine(x, x2, mode=self.mode)) # 4000
+        logits_x0 = self.out_intermediate(combine(x, x1, mode=self.mode))
+
         # x / y  feature
         p_x = self.cbn1_x(x_y) 
         p_x = self.down(p_x)
@@ -430,19 +454,6 @@ class PerturbativeUNet(nn.Module):
         p_x = self.up2_x(combine(p_x, p_x4, mode=self.mode))
         p_x = self.up3_x(combine(p_x, p_x3, mode=self.mode))
         logits_x1 = self.up4_x(combine(p_x, p_x2, mode=self.mode))
-
-        # X feature based on U-Net
-        x1 = self.rcbn1(X) # 4000
-        x2 = self.d(self.rcbn2(x1)) # 2000
-        x3 = self.d(self.rcbn3(x2)) # 1000
-        x4 = self.d(self.rcbn4(x3)) # 500
-        x = self.d(self.rcbn5(x4)) # 250
-
-        x = self.up1(x) # 500
-        x = self.up2(combine(x, x4, mode=self.mode)) # 1000
-        x = self.up3(combine(x, x3, mode=self.mode)) # 2000
-        x = self.up4(combine(x, x2, mode=self.mode)) # 4000
-        logits_x0 = self.out_intermediate(combine(x, x1, mode=self.mode))
 
         logits_X_and_x = self.outc_larger(combine(logits_x0, logits_x1, mode=self.mode))
 
@@ -567,9 +578,7 @@ class WeirdResidualAutoencoder(nn.Module):
 
         ret = torch.nn.Softplus()(logits_x0).squeeze()
         return  ret
-    
-    
-    
+     
 class ConvBNleaky(nn.Sequential):
     """convolution => [BN] => ReLU"""
     def __init__(self, in_channels, out_channels, k_size=3, stride=1):
